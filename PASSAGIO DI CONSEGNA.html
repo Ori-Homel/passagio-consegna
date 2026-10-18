@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shift Handover / Traspaso de Turno</title>
+    <style>
+        /* =========================================
+           ESTILOS PREMIUM (SOFT UI)
+           ========================================= */
+        :root {
+            --bg-base: #e6e9ef;
+            --bg-gradient: linear-gradient(135deg, #f0f3f8, #d9dee7);
+            --paper: #ffffff;
+            --paper-urgent: #fffbf0;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --urgent-color: #e53e3e;
+            --success-color: #38a169;
+            --shadow-drop: 8px 8px 16px #c5cbd6, -8px -8px 16px #ffffff;
+            --shadow-inner: inset 4px 4px 8px #c5cbd6, inset -4px -4px 8px #ffffff;
+            --shadow-paper: 0 10px 25px rgba(0,0,0,0.08), 0 2px 5px rgba(0,0,0,0.05);
+            --shadow-paper-hover: 0 20px 40px rgba(0,0,0,0.12), 0 5px 10px rgba(0,0,0,0.08);
+            --border-radius: 12px;
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: var(--font-main);
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            margin: 0; padding: 40px 20px; min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        .app-container { max-width: 1100px; margin: 0 auto; }
+        header {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .header-title h1 { margin: 0; font-size: 2.2em; font-weight: 800; letter-spacing: -1px; color: var(--text-main); }
+        .header-title p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 1em; font-weight: 500; }
+        .header-controls { display: flex; gap: 15px; align-items: center; }
+        
+        .lang-selector { display: flex; background: var(--bg-base); border-radius: 20px; padding: 4px; box-shadow: var(--shadow-inner); }
+        .lang-btn { background: transparent; border: none; padding: 8px 12px; border-radius: 16px; font-weight: 700; font-size: 0.8em; color: var(--text-muted); cursor: pointer; transition: all 0.2s; box-shadow: none; margin: 0;}
+        .lang-btn.active { background: var(--paper); color: var(--text-main); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        .btn-config {
+            background: var(--bg-base); color: var(--text-main); box-shadow: var(--shadow-drop);
+            border: none; padding: 10px 18px; border-radius: 10px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; margin: 0;
+        }
+        .btn-config:active { box-shadow: var(--shadow-inner); transform: translateY(1px); }
+
+        .config-panel {
+            display: none; background: var(--bg-base); padding: 25px; border-radius: var(--border-radius);
+            margin-bottom: 30px; box-shadow: var(--shadow-inner); border: 1px solid rgba(255,255,255,0.5);
+        }
+        .config-panel.active { display: block; }
+        .config-panel h3 { margin-top: 0; color: var(--text-main); font-size: 1.1em; }
+        .user-list { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+        .user-tag { background: var(--paper); color: var(--text-main); padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 0.9em; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
+        .user-tag button { background: #fed7d7; color: #c53030; border: none; border-radius: 50%; width: 22px; height: 22px; padding: 0; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: none; margin: 0; }
+        .add-user-form { display: flex; gap: 15px; }
+        .add-user-form input { padding: 12px; border-radius: 8px; border: none; font-family: inherit; flex: 1; box-shadow: var(--shadow-inner); background: var(--bg-base); color: var(--text-main); outline: none; }
+
+        .form-section { background: var(--paper); padding: 30px; border-radius: var(--border-radius); box-shadow: var(--shadow-drop); margin-bottom: 40px; }
+        #task-form { display: flex; gap: 20px; width: 100%; flex-wrap: wrap; align-items: flex-end;}
+        .input-group { display: flex; flex-direction: column; flex: 1; min-width: 160px; }
+        .input-group label { font-size: 0.8em; font-weight: 700; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .input-group input, .input-group select { padding: 14px; border: none; border-radius: 8px; font-family: inherit; font-size: 0.95em; background: var(--bg-base); box-shadow: var(--shadow-inner); outline: none; transition: all 0.2s; color: var(--text-main); }
+        .input-group input:focus, .input-group select:focus { background: var(--paper); box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.2); }
+        button[type="submit"] { padding: 14px 24px; background: var(--text-main); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em; transition: all 0.2s; box-shadow: 0 4px 10px rgba(45, 55, 72, 0.3); margin: 0; }
+        button[type="submit"]:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+        .tabs-container { display: flex; gap: 10px; margin-bottom: 25px; }
+        .tab-btn { background: transparent; color: var(--text-muted); border: none; border-radius: 8px; padding: 10px 20px; font-weight: 600; font-size: 1em; cursor: pointer; transition: all 0.2s; margin: 0; box-shadow: none; }
+        .tab-btn.active { background: var(--paper); color: var(--text-main); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .filters-bar { margin-bottom: 30px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .filters-bar button { background: rgba(255,255,255,0.4); color: var(--text-muted); border: 1px solid rgba(0,0,0,0.05); padding: 8px 16px; font-size: 0.85em; border-radius: 20px; cursor: pointer; transition: all 0.2s; font-weight: 600; margin: 0; box-shadow: none; }
+        .filters-bar button.active { background: var(--text-main); color: white; border-color: var(--text-main); }
+
+        #task-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        .task-card { background: var(--paper); padding: 25px; border-radius: var(--border-radius); display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: var(--shadow-paper); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); border-left: 4px solid var(--text-muted); }
+        .task-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-paper-hover); }
+        .task-card.urgent { border-left-color: var(--urgent-color); background: linear-gradient(to bottom right, var(--paper), var(--paper-urgent)); }
+        .task-card.completed { opacity: 0.6; background: var(--bg-base); border-left-color: var(--success-color); box-shadow: none; }
+        .task-card.completed .task-desc { text-decoration: line-through; color: var(--text-muted); }
+        .task-info { display: flex; flex-direction: column; gap: 15px; flex: 1; }
+        .task-meta { font-size: 0.8em; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+        .task-assignee { background: var(--bg-base); padding: 4px 10px; border-radius: 6px; color: var(--text-main); font-size: 0.9em; }
+        .task-card.urgent .task-assignee { background: #fed7d7; color: #c53030; }
+        .task-desc { font-size: 1.05em; line-height: 1.5; font-weight: 500; color: var(--text-main); margin-top: 5px;}
+        .task-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); }
+        .task-checkbox { appearance: none; -webkit-appearance: none; width: 28px; height: 28px; cursor: pointer; border-radius: 8px; background: var(--bg-base); box-shadow: var(--shadow-inner); position: relative; transition: all 0.2s; flex-shrink: 0; border: none; }
+        .task-checkbox:checked { background: var(--success-color); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); }
+        .task-checkbox:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; font-size: 16px; }
+        .btn-archive { background: transparent; color: var(--text-muted); padding: 6px 12px; font-size: 0.8em; border: 1px dashed var(--text-muted); border-radius: 6px; cursor: pointer; display: none; transition: all 0.2s; margin: 0; box-shadow: none; }
+        .task-card.completed .btn-archive { display: block; }
+        .empty-msg { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 60px; font-size: 1.1em; font-weight: 500; background: rgba(255,255,255,0.4); border-radius: var(--border-radius); border: 2px dashed rgba(0,0,0,0.1); }
+        
+        /* Loader */
+        .loader { text-align: center; color: var(--text-muted); font-weight: bold; padding: 50px; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-title">
+                <h1 id="ui-title">Traspaso de Turno</h1>
+                <p id="ui-subtitle">Notas y tareas para el siguiente equipo</p>
+            </div>
+            <div class="header-controls">
+                <div class="lang-selector">
+                    <button class="lang-btn active" onclick="setLanguage('es')">ES</button>
+                    <button class="lang-btn" onclick="setLanguage('en')">EN</button>
+                    <button class="lang-btn" onclick="setLanguage('it')">IT</button>
+                </div>
+                <button class="btn-config" id="toggle-config">
+                    <span id="ui-config-btn">⚙️ Gestionar Equipo</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="config-panel" id="config-panel">
+            <h3 id="ui-team-title">👥 Compañeros en el Turno</h3>
+            <div class="user-list" id="user-list"></div>
+            <form class="add-user-form" id="add-user-form">
+                <input type="text" id="new-user-name" placeholder="Nombre..." required>
+                <button type="submit" id="ui-add-btn">Añadir</button>
+            </form>
+        </div>
+
+        <section class="form-section">
+            <form id="task-form">
+                <div class="input-group">
+                    <label for="task-date" id="ui-label-date">Fecha</label>
+                    <input type="date" id="task-date" required>
+                </div>
+                <div class="input-group">
+                    <label for="task-assignee" id="ui-label-assignee">Dejada por</label>
+                    <select id="task-assignee" required></select>
+                </div>
+                <div class="input-group">
+                    <label for="task-priority" id="ui-label-priority">Prioridad</label>
+                    <select id="task-priority">
+                        <option value="normal" id="ui-opt-normal">Normal</option>
+                        <option value="urgent" id="ui-opt-urgent">🔴 Urgente</option>
+                    </select>
+                </div>
+                <div class="input-group" style="flex: 2;">
+                    <label for="task-desc" id="ui-label-desc">Descripción</label>
+                    <input type="text" id="task-desc" placeholder="..." required>
+                </div>
+                <button type="submit" id="ui-submit-btn">📌 Clavar Nota</button>
+            </form>
+        </section>
+
+        <div class="tabs-container">
+            <button class="tab-btn active" id="tab-board">📌 <span id="ui-tab-board">Pizarra</span></button>
+            <button class="tab-btn" id="tab-history">🗄️ <span id="ui-tab-history">Historial</span></button>
+        </div>
+
+        <section class="filters-bar" id="filters-bar">
+            <button id="filter-all" class="active">Ver Todo</button>
+            <button id="filter-pending">Pendientes</button>
+            <button id="filter-urgent">Urgentes</button>
+        </section>
+
+        <!-- Aquí se muestran las tareas -->
+        <section id="task-list">
+            <div class="loader">🔄 Conectando con la nube...</div>
+        </section>
+    </div>
+
+    <script>
+        // =========================================
+        // 🔑 TUS CLAVES DE JSONBIN (CAMBIA ESTO)
+        // =========================================
+        const API_KEY = '$2a$10$v28aFPR3QGJmtuxv1sF93eGjQ2psQQBMx.twNk2h7o4ax7zsOHbwu';  // Reemplaza con tu Master Key
+        const BIN_ID = '6ad4f532ffd5d16053764a52';    // Reemplaza con tu Bin ID
+        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
+        // =========================================
+        // DICCIONARIO DE IDIOMAS
+        // =========================================
+        const translations = {
+            es: { title: "Traspaso de Turno", subtitle: "Notas y tareas para el siguiente equipo", configBtn: "⚙️ Gestionar Equipo", teamTitle: "👥 Compañeros en el Turno", addBtn: "Añadir", labelDate: "Fecha", labelAssignee: "Dejada por", labelPriority: "Prioridad", optNormal: "Normal", optUrgent: "🔴 Urgente", labelDesc: "Descripción", submitBtn: "📌 Clavar Nota", tabBoard: "Pizarra", tabHistory: "Historial", filterAll: "Ver Todo", filterPending: "Pendientes", filterUrgent: "Urgentes", emptyBoard: "No hay notas en la pizarra.", emptyHistory: "El historial está vacío.", confirmArchive: "¿Mover esta nota al historial?", confirmDeleteUser: "¿Eliminar a este compañero?", archiveBtn: "Archivar", loading: "🔄 Sincronizando...", error: "⚠️ Error de conexión." },
+            en: { title: "Shift Handover", subtitle: "Notes and tasks for the next team", configBtn: "⚙️ Manage Team", teamTitle: "👥 Team Members", addBtn: "Add", labelDate: "Date", labelAssignee: "Left by", labelPriority: "Priority", optNormal: "Normal", optUrgent: "🔴 Urgent", labelDesc: "Description", submitBtn: "📌 Pin Note", tabBoard: "Board", tabHistory: "History", filterAll: "View All", filterPending: "Pending", filterUrgent: "Urgent", emptyBoard: "No notes on the board.", emptyHistory: "History is empty.", confirmArchive: "Move this note to history?", confirmDeleteUser: "Remove this team member?", archiveBtn: "Archive", loading: "🔄 Syncing...", error: "⚠️ Connection error." },
+            it: { title: "Passaggio di Turno", subtitle: "Note e compiti per il prossimo team", configBtn: "⚙️ Gestisci Team", teamTitle: "👥 Membri del Team", addBtn: "Aggiungi", labelDate: "Data", labelAssignee: "Lasciato da", labelPriority: "Priorità", optNormal: "Normale", optUrgent: "🔴 Urgente", labelDesc: "Descrizione", submitBtn: "📌 Fissa Nota", tabBoard: "Bacheca", tabHistory: "Cronologia", filterAll: "Vedi Tutto", filterPending: "In Sospeso", filterUrgent: "Urgenti", emptyBoard: "Nessuna nota nella bacheca.", emptyHistory: "La cronologia è vuota.", confirmArchive: "Spostare questa nota nella cronologia?", confirmDeleteUser: "Rimuovere questo membro?", archiveBtn: "Archivia", loading: "🔄 Sincronizzazione...", error: "⚠️ Errore di connessione." }
+        };
+
+        let currentLang = localStorage.getItem('handoverLang') || 'es';
+        
+        // Estado en memoria (luego se sube a la nube)
+        let tasks = [];
+        let users = JSON.parse(localStorage.getItem('handoverUsers')) || ['A.K.', 'Ennio', 'Martina', 'Michele'];
+        let currentFilter = 'all';
+        let currentView = 'board';
+
+        // Elementos del DOM
+        const form = document.getElementById('task-form');
+        const taskList = document.getElementById('task-list');
+        const dateInput = document.getElementById('task-date');
+        const assigneeSelect = document.getElementById('task-assignee');
+        const userListDiv = document.getElementById('user-list');
+        const addUserForm = document.getElementById('add-user-form');
+        const configPanel = document.getElementById('config-panel');
+        const tabBoard = document.getElementById('tab-board');
+        const tabHistory = document.getElementById('tab-history');
+        const filtersBar = document.getElementById('filters-bar');
+
+        dateInput.value = new Date().toISOString().split('T')[0];
+
+        // =========================================
+        // ☁️ FUNCIONES DE NUBE (JSONBIN)
+        // =========================================
+        
+        // 1. Leer datos de la nube
+        async function fetchTasksFromCloud() {
+            try {
+                const response = await fetch(JSONBIN_URL, {
+                    method: 'GET',
+                    headers: {
+                        'X-Master-Key': API_KEY,
+                        'X-Bin-Meta': 'false' // Solo queremos los datos, no la metadata
+                    }
+                });
+                if (!response.ok) throw new Error('Error en la petición');
+                const data = await response.json();
+                
+                // Si el bin está vacío, data.tasks será undefined
+                tasks = data.tasks || [];
+                renderTasks();
+            } catch (error) {
+                console.error("Error al leer:", error);
+                taskList.innerHTML = `<p class="empty-msg">${translations[currentLang].error}</p>`;
+            }
+        }
+
+        // 2. Guardar datos en la nube
+        async function saveTasksToCloud() {
+            try {
+                await fetch(JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY
+                    },
+                    body: JSON.stringify({ tasks: tasks })
+                });
+                renderTasks(); // Actualizar pantalla tras guardar
+            } catch (error) {
+                console.error("Error al guardar:", error);
+                alert(translations[currentLang].error);
+            }
+        }
+
+        // =========================================
+        // TRADUCCIONES Y UI
+        // =========================================
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('handoverLang', lang);
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.lang-btn[onclick="setLanguage('${lang}')"]`).classList.add('active');
+            const t = translations[lang];
+            document.getElementById('ui-title').textContent = t.title;
+            document.getElementById('ui-subtitle').textContent = t.subtitle;
+            document.getElementById('ui-config-btn').textContent = t.configBtn;
+            document.getElementById('ui-team-title').textContent = t.teamTitle;
+            document.getElementById('ui-add-btn').textContent = t.addBtn;
+            document.getElementById('ui-label-date').textContent = t.labelDate;
+            document.getElementById('ui-label-assignee').textContent = t.labelAssignee;
+            document.getElementById('ui-label-priority').textContent = t.labelPriority;
+            document.getElementById('ui-opt-normal').textContent = t.optNormal;
+            document.getElementById('ui-opt-urgent').textContent = t.optUrgent;
+            document.getElementById('ui-label-desc').textContent = t.labelDesc;
+            document.getElementById('ui-submit-btn').textContent = t.submitBtn;
+            document.getElementById('ui-tab-board').textContent = t.tabBoard;
+            document.getElementById('ui-tab-history').textContent = t.tabHistory;
+            document.getElementById('filter-all').textContent = t.filterAll;
+            document.getElementById('filter-pending').textContent = t.filterPending;
+            document.getElementById('filter-urgent').textContent = t.filterUrgent;
+            renderTasks();
+        }
+
+        // =========================================
+        // LÓGICA DE USUARIOS
+        // =========================================
+        function renderUsers() {
+            assigneeSelect.innerHTML = '';
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user; option.textContent = user;
+                assigneeSelect.appendChild(option);
+            });
+            userListDiv.innerHTML = '';
+            users.forEach((user, index) => {
+                const tag = document.createElement('div');
+                tag.className = 'user-tag';
+                tag.innerHTML = `${user} <button onclick="deleteUser(${index})">×</button>`;
+                userListDiv.appendChild(tag);
+            });
+            localStorage.setItem('handoverUsers', JSON.stringify(users));
+        }
+
+        addUserForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newName = document.getElementById('new-user-name').value.trim().toUpperCase();
+            if (newName && !users.includes(newName)) {
+                users.push(newName); renderUsers();
+                document.getElementById('new-user-name').value = '';
+            }
+        });
+
+        window.deleteUser = function(index) {
+            if(confirm(translations[currentLang].confirmDeleteUser)) {
+                users.splice(index, 1); renderUsers();
+            }
+        }
+
+        document.getElementById('toggle-config').addEventListener('click', () => {
+            configPanel.classList.toggle('active');
+        });
+
+        // =========================================
+        // RENDERIZADO DE TAREAS
+        // =========================================
+        function renderTasks() {
+            taskList.innerHTML = ''; 
+            const t = translations[currentLang];
+            let viewTasks = tasks.filter(task => currentView === 'board' ? !task.archived : task.archived);
+            let filteredTasks = viewTasks.filter(task => {
+                if (currentFilter === 'pending') return !task.completed;
+                if (currentFilter === 'urgent') return task.priority === 'urgent' && !task.completed;
+                return true;
+            });
+            filteredTasks.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (filteredTasks.length === 0) {
+                taskList.innerHTML = `<p class="empty-msg">${currentView === 'board' ? t.emptyBoard : t.emptyHistory}</p>`;
+                return;
+            }
+
+            filteredTasks.forEach(task => {
+                const card = document.createElement('div');
+                card.className = `task-card ${task.priority === 'urgent' ? 'urgent' : ''} ${task.completed ? 'completed' : ''}`;
+                const dateObj = new Date(task.date + 'T00:00:00');
+                const formattedDate = dateObj.toLocaleDateString(currentLang === 'en' ? 'en-GB' : currentLang + '-' + currentLang.toUpperCase(), { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+                card.innerHTML = `
+                    <div class="task-info">
+                        <div class="task-meta"><span>📅 ${formattedDate}</span><span class="task-assignee">👤 ${task.assignee}</span></div>
+                        <div class="task-desc">${task.description}</div>
+                    </div>
+                    <div class="task-actions">
+                        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} ${task.archived ? 'disabled' : ''}>
+                        <button class="btn-archive" onclick="archiveTask(${task.id})">${t.archiveBtn}</button>
+                    </div>
+                `;
+                const checkbox = card.querySelector('.task-checkbox');
+                if(!task.archived) {
+                    checkbox.addEventListener('change', () => {
+                        // Animación de check y luego guardar en la nube
+                        setTimeout(() => toggleTask(task.id), 200); 
+                    });
+                }
+                taskList.appendChild(card);
+            });
+        }
+
+        // =========================================
+        // ACCIONES
+        // =========================================
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newTask = {
+                id: Date.now(), date: dateInput.value, assignee: assigneeSelect.value,
+                priority: document.getElementById('task-priority').value,
+                description: document.getElementById('task-desc').value,
+                completed: false, archived: false
+            };
+            tasks.push(newTask);
+            saveTasksToCloud(); // ☁️ Guardar en la nube
+            
+            document.getElementById('task-desc').value = '';
+            document.getElementById('task-priority').value = 'normal';
+            document.getElementById('task-desc').focus();
+        });
+
+        function toggleTask(id) {
+            tasks = tasks.map(task => task.id === id ? { ...task, completed: !task.completed } : task);
+            saveTasksToCloud(); // ☁️ Guardar en la nube
+        }
+
+        window.archiveTask = function(id) {
+            if(confirm(translations[currentLang].confirmArchive)) {
+                tasks = tasks.map(task => task.id === id ? { ...task, archived: true } : task);
+                saveTasksToCloud(); // ☁️ Guardar en la nube
+            }
+        }
+
+        // =========================================
+        // PESTAÑAS Y FILTROS
+        // =========================================
+        tabBoard.addEventListener('click', () => {
+            currentView = 'board'; tabBoard.classList.add('active'); tabHistory.classList.remove('active');
+            filtersBar.style.display = 'flex'; setFilter('all', document.getElementById('filter-all'));
+        });
+        tabHistory.addEventListener('click', () => {
+            currentView = 'history'; tabHistory.classList.add('active'); tabBoard.classList.remove('active');
+            filtersBar.style.display = 'none'; renderTasks();
+        });
+        document.getElementById('filter-all').addEventListener('click', (e) => setFilter('all', e.target));
+        document.getElementById('filter-pending').addEventListener('click', (e) => setFilter('pending', e.target));
+        document.getElementById('filter-urgent').addEventListener('click', (e) => setFilter('urgent', e.target));
+        function setFilter(filter, btn) {
+            currentFilter = filter;
+            document.querySelectorAll('.filters-bar button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active'); renderTasks();
+        }
+
+        // =========================================
+        // INICIALIZACIÓN
+        // =========================================
+        renderUsers();
+        setLanguage(currentLang);
+        
+        // Al cargar la página, leemos de la nube
+        if(API_KEY.includes('TU_API_KEY') || BIN_ID.includes('TU_BIN_ID')) {
+            taskList.innerHTML = `<p class="empty-msg" style="color: #c53030;">⚠️ Faltan las claves de JSONBin. Revisa el código.</p>`;
+        } else {
+            fetchTasksFromCloud();
+        }
+    </script>
+</body>
+</html>
