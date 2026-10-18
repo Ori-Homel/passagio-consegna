@@ -32,8 +32,10 @@
             color: var(--text-main);
             margin: 0; padding: 40px 20px; min-height: 100vh;
             -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
         }
-        .app-container { max-width: 1100px; margin: 0 auto; }
+        .app-container { max-width: 1100px; margin: 0 auto; width: 100%; flex: 1; }
         header {
             display: flex; justify-content: space-between; align-items: flex-end;
             margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.05);
@@ -100,8 +102,23 @@
         .task-card.completed .btn-archive { display: block; }
         .empty-msg { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 60px; font-size: 1.1em; font-weight: 500; background: rgba(255,255,255,0.4); border-radius: var(--border-radius); border: 2px dashed rgba(0,0,0,0.1); }
         
-        /* Loader */
         .loader { text-align: center; color: var(--text-muted); font-weight: bold; padding: 50px; font-size: 1.2em; }
+
+        /* =========================================
+           MARCA DE AGUA / FOOTER LEGAL
+           ========================================= */
+        .watermark-footer {
+            max-width: 1100px;
+            margin: 60px auto 20px auto;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            text-align: center;
+            font-size: 0.85em; /* Similar al subtítulo */
+            color: var(--text-muted);
+            line-height: 1.6;
+            opacity: 0.8; /* Un toque sutil */
+            font-weight: 400;
+        }
     </style>
 </head>
 <body>
@@ -174,9 +191,14 @@
         </section>
     </div>
 
+    <!-- MARCA DE AGUA LEGAL -->
+    <footer class="watermark-footer">
+        © 2026 All rights reserved. Platform developed by Carlos Medina, responsible for the design of the technological architecture, software engineering, and comprehensive implementation of the solution. This software constitutes the intellectual property of its author and is protected by Italian legislation and European copyright regulations.
+    </footer>
+
     <script>
         // =========================================
-        // 🔑 TUS CLAVES DE JSONBIN (CAMBIA ESTO)
+        // 🔑 TUS CLAVES DE JSONBIN
         // =========================================
         const API_KEY = '$2a$10$v28aFPR3QGJmtuxv1sF93eGjQ2psQQBMx.twNk2h7o4ax7zsOHbwu';  // Reemplaza con tu Master Key
         const BIN_ID = '6ad4f532ffd5d16053764a52';    // Reemplaza con tu Bin ID
