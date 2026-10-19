@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shift Handover / Traspaso de Turno</title>
     <style>
-        /* =========================================
-           ESTILOS PREMIUM (SOFT UI)
-           ========================================= */
         :root {
             --bg-base: #e6e9ef;
             --bg-gradient: linear-gradient(135deg, #f0f3f8, #d9dee7);
@@ -32,8 +29,7 @@
             color: var(--text-main);
             margin: 0; padding: 40px 20px; min-height: 100vh;
             -webkit-font-smoothing: antialiased;
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
         .app-container { max-width: 1100px; margin: 0 auto; width: 100%; flex: 1; }
         header {
@@ -104,20 +100,11 @@
         
         .loader { text-align: center; color: var(--text-muted); font-weight: bold; padding: 50px; font-size: 1.2em; }
 
-        /* =========================================
-           MARCA DE AGUA / FOOTER LEGAL
-           ========================================= */
         .watermark-footer {
-            max-width: 1100px;
-            margin: 60px auto 20px auto;
-            padding-top: 20px;
-            border-top: 1px solid rgba(0, 0, 0, 0.08);
-            text-align: center;
-            font-size: 0.85em; /* Similar al subtítulo */
-            color: var(--text-muted);
-            line-height: 1.6;
-            opacity: 0.8; /* Un toque sutil */
-            font-weight: 400;
+            max-width: 1100px; margin: 60px auto 20px auto; padding-top: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.08); text-align: center;
+            font-size: 0.85em; color: var(--text-muted); line-height: 1.6;
+            opacity: 0.8; font-weight: 400;
         }
     </style>
 </head>
@@ -185,43 +172,40 @@
             <button id="filter-urgent">Urgentes</button>
         </section>
 
-        <!-- Aquí se muestran las tareas -->
         <section id="task-list">
             <div class="loader">🔄 Conectando con la nube...</div>
         </section>
     </div>
 
-    <!-- MARCA DE AGUA LEGAL -->
     <footer class="watermark-footer">
         © 2026 All rights reserved. Platform developed by Carlos Medina, responsible for the design of the technological architecture, software engineering, and comprehensive implementation of the solution. This software constitutes the intellectual property of its author and is protected by Italian legislation and European copyright regulations.
     </footer>
 
     <script>
         // =========================================
-        // 🔑 TUS CLAVES DE JSONBIN
+        // 🔑 TUS CLAVES DE JSONBIN (¡REVISA QUE ESTÉN BIEN!)
         // =========================================
-        const API_KEY = '$2a$10$v28aFPR3QGJmtuxv1sF93eGjQ2psQQBMx.twNk2h7o4ax7zsOHbwu';  // Reemplaza con tu Master Key
-        const BIN_ID = '6ad4f532ffd5d16053764a52';    // Reemplaza con tu Bin ID
-        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+        // Asegúrate de que no haya espacios en blanco al principio o final
+        const API_KEY = '$2a$10$v28aFPR3QGJmtuxv1sF93eGjQ2psQQBMx.twNk2h7o4ax7zsOHbwu';  
+        const BIN_ID = '6ad4f532ffd5d16053764a52';    
+        
+        // Eliminamos espacios accidentales en las claves
+        const cleanApiKey = API_KEY.trim();
+        const cleanBinId = BIN_ID.trim();
+        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${cleanBinId}`;
 
-        // =========================================
-        // DICCIONARIO DE IDIOMAS
-        // =========================================
         const translations = {
-            es: { title: "Traspaso de Turno", subtitle: "Notas y tareas para el siguiente equipo", configBtn: "⚙️ Gestionar Equipo", teamTitle: "👥 Compañeros en el Turno", addBtn: "Añadir", labelDate: "Fecha", labelAssignee: "Dejada por", labelPriority: "Prioridad", optNormal: "Normal", optUrgent: "🔴 Urgente", labelDesc: "Descripción", submitBtn: "📌 Clavar Nota", tabBoard: "Pizarra", tabHistory: "Historial", filterAll: "Ver Todo", filterPending: "Pendientes", filterUrgent: "Urgentes", emptyBoard: "No hay notas en la pizarra.", emptyHistory: "El historial está vacío.", confirmArchive: "¿Mover esta nota al historial?", confirmDeleteUser: "¿Eliminar a este compañero?", archiveBtn: "Archivar", loading: "🔄 Sincronizando...", error: "⚠️ Error de conexión." },
-            en: { title: "Shift Handover", subtitle: "Notes and tasks for the next team", configBtn: "⚙️ Manage Team", teamTitle: "👥 Team Members", addBtn: "Add", labelDate: "Date", labelAssignee: "Left by", labelPriority: "Priority", optNormal: "Normal", optUrgent: "🔴 Urgent", labelDesc: "Description", submitBtn: "📌 Pin Note", tabBoard: "Board", tabHistory: "History", filterAll: "View All", filterPending: "Pending", filterUrgent: "Urgent", emptyBoard: "No notes on the board.", emptyHistory: "History is empty.", confirmArchive: "Move this note to history?", confirmDeleteUser: "Remove this team member?", archiveBtn: "Archive", loading: "🔄 Syncing...", error: "⚠️ Connection error." },
-            it: { title: "Passaggio di Turno", subtitle: "Note e compiti per il prossimo team", configBtn: "⚙️ Gestisci Team", teamTitle: "👥 Membri del Team", addBtn: "Aggiungi", labelDate: "Data", labelAssignee: "Lasciato da", labelPriority: "Priorità", optNormal: "Normale", optUrgent: "🔴 Urgente", labelDesc: "Descrizione", submitBtn: "📌 Fissa Nota", tabBoard: "Bacheca", tabHistory: "Cronologia", filterAll: "Vedi Tutto", filterPending: "In Sospeso", filterUrgent: "Urgenti", emptyBoard: "Nessuna nota nella bacheca.", emptyHistory: "La cronologia è vuota.", confirmArchive: "Spostare questa nota nella cronologia?", confirmDeleteUser: "Rimuovere questo membro?", archiveBtn: "Archivia", loading: "🔄 Sincronizzazione...", error: "⚠️ Errore di connessione." }
+            es: { title: "Traspaso de Turno", subtitle: "Notas y tareas para el siguiente equipo", configBtn: "⚙️ Gestionar Equipo", teamTitle: "👥 Compañeros en el Turno", addBtn: "Añadir", labelDate: "Fecha", labelAssignee: "Dejada por", labelPriority: "Prioridad", optNormal: "Normal", optUrgent: "🔴 Urgente", labelDesc: "Descripción", submitBtn: "📌 Clavar Nota", tabBoard: "Pizarra", tabHistory: "Historial", filterAll: "Ver Todo", filterPending: "Pendientes", filterUrgent: "Urgentes", emptyBoard: "No hay notas en la pizarra.", emptyHistory: "El historial está vacío.", confirmArchive: "¿Mover esta nota al historial?", confirmDeleteUser: "¿Eliminar a este compañero?", archiveBtn: "Archivar", loading: "🔄 Sincronizando...", error: "⚠️ Error de conexión.", errorSave: "❌ ERROR AL GUARDAR EN LA NUBE.\nRevisa tus claves de JSONBin.", errorLoad: "❌ ERROR AL LEER DE LA NUBE.\nRevisa tus claves de JSONBin." },
+            en: { title: "Shift Handover", subtitle: "Notes and tasks for the next team", configBtn: "⚙️ Manage Team", teamTitle: "👥 Team Members", addBtn: "Add", labelDate: "Date", labelAssignee: "Left by", labelPriority: "Priority", optNormal: "Normal", optUrgent: "🔴 Urgent", labelDesc: "Description", submitBtn: "📌 Pin Note", tabBoard: "Board", tabHistory: "History", filterAll: "View All", filterPending: "Pending", filterUrgent: "Urgent", emptyBoard: "No notes on the board.", emptyHistory: "History is empty.", confirmArchive: "Move this note to history?", confirmDeleteUser: "Remove this team member?", archiveBtn: "Archive", loading: "🔄 Syncing...", error: "⚠️ Connection error.", errorSave: "❌ ERROR SAVING TO CLOUD.\nCheck your JSONBin keys.", errorLoad: "❌ ERROR LOADING FROM CLOUD.\nCheck your JSONBin keys." },
+            it: { title: "Passaggio di Turno", subtitle: "Note e compiti per il prossimo team", configBtn: "⚙️ Gestisci Team", teamTitle: "👥 Membri del Team", addBtn: "Aggiungi", labelDate: "Data", labelAssignee: "Lasciato da", labelPriority: "Priorità", optNormal: "Normale", optUrgent: "🔴 Urgente", labelDesc: "Descrizione", submitBtn: "📌 Fissa Nota", tabBoard: "Bacheca", tabHistory: "Cronologia", filterAll: "Vedi Tutto", filterPending: "In Sospeso", filterUrgent: "Urgenti", emptyBoard: "Nessuna nota nella bacheca.", emptyHistory: "La cronologia è vuota.", confirmArchive: "Spostare questa nota nella cronologia?", confirmDeleteUser: "Rimuovere questo membro?", archiveBtn: "Archivia", loading: "🔄 Sincronizzazione...", error: "⚠️ Errore di connessione.", errorSave: "❌ ERRORE NEL SALVATAGGIO.\nControlla le chiavi JSONBin.", errorLoad: "❌ ERRORE NEL CARICAMENTO.\nControlla le chiavi JSONBin." }
         };
 
         let currentLang = localStorage.getItem('handoverLang') || 'es';
-        
-        // Estado en memoria (luego se sube a la nube)
         let tasks = [];
         let users = JSON.parse(localStorage.getItem('handoverUsers')) || ['A.K.', 'Ennio', 'Martina', 'Michele'];
         let currentFilter = 'all';
         let currentView = 'board';
 
-        // Elementos del DOM
         const form = document.getElementById('task-form');
         const taskList = document.getElementById('task-list');
         const dateInput = document.getElementById('task-date');
@@ -236,52 +220,57 @@
         dateInput.value = new Date().toISOString().split('T')[0];
 
         // =========================================
-        // ☁️ FUNCIONES DE NUBE (JSONBIN)
+        // ☁️ FUNCIONES DE NUBE (CON DIAGNÓSTICO)
         // =========================================
         
-        // 1. Leer datos de la nube
         async function fetchTasksFromCloud() {
             try {
                 const response = await fetch(JSONBIN_URL, {
                     method: 'GET',
                     headers: {
-                        'X-Master-Key': API_KEY,
-                        'X-Bin-Meta': 'false' // Solo queremos los datos, no la metadata
+                        'X-Master-Key': cleanApiKey,
+                        'X-Bin-Meta': 'false'
                     }
                 });
-                if (!response.ok) throw new Error('Error en la petición');
-                const data = await response.json();
                 
-                // Si el bin está vacío, data.tasks será undefined
+                // Si la respuesta NO es exitosa (ej. 401 Unauthorized)
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
                 tasks = data.tasks || [];
                 renderTasks();
             } catch (error) {
                 console.error("Error al leer:", error);
-                taskList.innerHTML = `<p class="empty-msg">${translations[currentLang].error}</p>`;
+                taskList.innerHTML = `<p class="empty-msg" style="color: #c53030;">${translations[currentLang].errorLoad}</p>`;
             }
         }
 
-        // 2. Guardar datos en la nube
         async function saveTasksToCloud() {
             try {
-                await fetch(JSONBIN_URL, {
+                const response = await fetch(JSONBIN_URL, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Master-Key': API_KEY
+                        'X-Master-Key': cleanApiKey
                     },
                     body: JSON.stringify({ tasks: tasks })
                 });
-                renderTasks(); // Actualizar pantalla tras guardar
+                
+                // 🔴 AQUÍ ESTÁ LA CORRECCIÓN: Verificamos si el servidor aceptó el guardado
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                renderTasks();
             } catch (error) {
                 console.error("Error al guardar:", error);
-                alert(translations[currentLang].error);
+                // Alerta clara para el usuario
+                alert(`${translations[currentLang].errorSave}\n\nDetalle técnico: ${error.message}`);
             }
         }
 
-        // =========================================
-        // TRADUCCIONES Y UI
-        // =========================================
         function setLanguage(lang) {
             currentLang = lang;
             localStorage.setItem('handoverLang', lang);
@@ -308,9 +297,6 @@
             renderTasks();
         }
 
-        // =========================================
-        // LÓGICA DE USUARIOS
-        // =========================================
         function renderUsers() {
             assigneeSelect.innerHTML = '';
             users.forEach(user => {
@@ -347,9 +333,6 @@
             configPanel.classList.toggle('active');
         });
 
-        // =========================================
-        // RENDERIZADO DE TAREAS
-        // =========================================
         function renderTasks() {
             taskList.innerHTML = ''; 
             const t = translations[currentLang];
@@ -385,7 +368,6 @@
                 const checkbox = card.querySelector('.task-checkbox');
                 if(!task.archived) {
                     checkbox.addEventListener('change', () => {
-                        // Animación de check y luego guardar en la nube
                         setTimeout(() => toggleTask(task.id), 200); 
                     });
                 }
@@ -393,9 +375,6 @@
             });
         }
 
-        // =========================================
-        // ACCIONES
-        // =========================================
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const newTask = {
@@ -405,7 +384,7 @@
                 completed: false, archived: false
             };
             tasks.push(newTask);
-            saveTasksToCloud(); // ☁️ Guardar en la nube
+            saveTasksToCloud(); 
             
             document.getElementById('task-desc').value = '';
             document.getElementById('task-priority').value = 'normal';
@@ -414,19 +393,16 @@
 
         function toggleTask(id) {
             tasks = tasks.map(task => task.id === id ? { ...task, completed: !task.completed } : task);
-            saveTasksToCloud(); // ☁️ Guardar en la nube
+            saveTasksToCloud(); 
         }
 
         window.archiveTask = function(id) {
             if(confirm(translations[currentLang].confirmArchive)) {
                 tasks = tasks.map(task => task.id === id ? { ...task, archived: true } : task);
-                saveTasksToCloud(); // ☁️ Guardar en la nube
+                saveTasksToCloud(); 
             }
         }
 
-        // =========================================
-        // PESTAÑAS Y FILTROS
-        // =========================================
         tabBoard.addEventListener('click', () => {
             currentView = 'board'; tabBoard.classList.add('active'); tabHistory.classList.remove('active');
             filtersBar.style.display = 'flex'; setFilter('all', document.getElementById('filter-all'));
@@ -444,14 +420,11 @@
             btn.classList.add('active'); renderTasks();
         }
 
-        // =========================================
-        // INICIALIZACIÓN
-        // =========================================
         renderUsers();
         setLanguage(currentLang);
         
-        // Al cargar la página, leemos de la nube
-        if(API_KEY.includes('TU_API_KEY') || BIN_ID.includes('TU_BIN_ID')) {
+        // Verificación inicial de claves
+        if(cleanApiKey.includes('TU_API_KEY') || cleanBinId.includes('TU_BIN_ID')) {
             taskList.innerHTML = `<p class="empty-msg" style="color: #c53030;">⚠️ Faltan las claves de JSONBin. Revisa el código.</p>`;
         } else {
             fetchTasksFromCloud();
