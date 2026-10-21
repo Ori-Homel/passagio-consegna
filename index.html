@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shift Handover / Traspaso de Turno</title>
     <style>
+        /* =========================================
+           VARIABLES (MODO CLARO)
+           ========================================= */
         :root {
             --bg-base: #e6e9ef;
             --bg-gradient: linear-gradient(135deg, #f0f3f8, #d9dee7);
@@ -20,7 +23,30 @@
             --shadow-paper-hover: 0 20px 40px rgba(0,0,0,0.12), 0 5px 10px rgba(0,0,0,0.08);
             --border-radius: 12px;
             --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --modal-overlay: rgba(0, 0, 0, 0.5);
+            --input-bg: var(--bg-base);
         }
+
+        /* =========================================
+           VARIABLES (MODO OSCURO)
+           ========================================= */
+        body.dark-mode {
+            --bg-base: #1a202c;
+            --bg-gradient: linear-gradient(135deg, #1a202c, #2d3748);
+            --paper: #2d3748;
+            --paper-urgent: #3d2f2f;
+            --text-main: #f7fafc;
+            --text-muted: #a0aec0;
+            --urgent-color: #fc8181;
+            --success-color: #68d391;
+            --shadow-drop: 8px 8px 16px #0f1319, -8px -8px 16px #252c38;
+            --shadow-inner: inset 4px 4px 8px #0f1319, inset -4px -4px 8px #252c38;
+            --shadow-paper: 0 10px 25px rgba(0,0,0,0.4), 0 2px 5px rgba(0,0,0,0.3);
+            --shadow-paper-hover: 0 20px 40px rgba(0,0,0,0.6), 0 5px 10px rgba(0,0,0,0.4);
+            --modal-overlay: rgba(0, 0, 0, 0.8);
+            --input-bg: #1a202c;
+        }
+
         * { box-sizing: border-box; }
         body {
             font-family: var(--font-main);
@@ -30,19 +56,30 @@
             margin: 0; padding: 40px 20px; min-height: 100vh;
             -webkit-font-smoothing: antialiased;
             display: flex; flex-direction: column;
+            transition: background 0.3s, color 0.3s;
         }
         .app-container { max-width: 1100px; margin: 0 auto; width: 100%; flex: 1; }
+        
         header {
             display: flex; justify-content: space-between; align-items: flex-end;
-            margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.05);
+            margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.1);
+            gap: 15px; flex-wrap: wrap;
         }
         .header-title h1 { margin: 0; font-size: 2.2em; font-weight: 800; letter-spacing: -1px; color: var(--text-main); }
         .header-title p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 1em; font-weight: 500; }
-        .header-controls { display: flex; gap: 15px; align-items: center; }
+        .header-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         
-        .lang-selector { display: flex; background: var(--bg-base); border-radius: 20px; padding: 4px; box-shadow: var(--shadow-inner); }
-        .lang-btn { background: transparent; border: none; padding: 8px 12px; border-radius: 16px; font-weight: 700; font-size: 0.8em; color: var(--text-muted); cursor: pointer; transition: all 0.2s; box-shadow: none; margin: 0;}
+        .lang-selector, .theme-toggle { 
+            display: flex; background: var(--bg-base); border-radius: 20px; padding: 4px; 
+            box-shadow: var(--shadow-inner); transition: background 0.3s;
+        }
+        .lang-btn, .theme-btn { 
+            background: transparent; border: none; padding: 8px 12px; border-radius: 16px; 
+            font-weight: 700; font-size: 0.8em; color: var(--text-muted); cursor: pointer; 
+            transition: all 0.2s; box-shadow: none; margin: 0;
+        }
         .lang-btn.active { background: var(--paper); color: var(--text-main); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .theme-btn { font-size: 1.2em; padding: 4px 10px; }
         
         .btn-config {
             background: var(--bg-base); color: var(--text-main); box-shadow: var(--shadow-drop);
@@ -50,10 +87,17 @@
             cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; margin: 0;
         }
         .btn-config:active { box-shadow: var(--shadow-inner); transform: translateY(1px); }
+        .btn-export {
+            background: var(--success-color); color: white; border: none; padding: 10px 18px;
+            border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px; margin: 0;
+            box-shadow: 0 4px 10px rgba(56, 161, 105, 0.3);
+        }
+        .btn-export:hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(56, 161, 105, 0.4); }
 
         .config-panel {
             display: none; background: var(--bg-base); padding: 25px; border-radius: var(--border-radius);
-            margin-bottom: 30px; box-shadow: var(--shadow-inner); border: 1px solid rgba(255,255,255,0.5);
+            margin-bottom: 30px; box-shadow: var(--shadow-inner); border: 1px solid rgba(255,255,255,0.05);
         }
         .config-panel.active { display: block; }
         .config-panel h3 { margin-top: 0; color: var(--text-main); font-size: 1.1em; }
@@ -61,43 +105,93 @@
         .user-tag { background: var(--paper); color: var(--text-main); padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 0.9em; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
         .user-tag button { background: #fed7d7; color: #c53030; border: none; border-radius: 50%; width: 22px; height: 22px; padding: 0; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: none; margin: 0; }
         .add-user-form { display: flex; gap: 15px; }
-        .add-user-form input { padding: 12px; border-radius: 8px; border: none; font-family: inherit; flex: 1; box-shadow: var(--shadow-inner); background: var(--bg-base); color: var(--text-main); outline: none; }
+        .add-user-form input, .input-group input, .input-group select { 
+            padding: 12px; border-radius: 8px; border: none; font-family: inherit; flex: 1; 
+            box-shadow: var(--shadow-inner); background: var(--input-bg); color: var(--text-main); outline: none; 
+            transition: background 0.3s;
+        }
 
-        .form-section { background: var(--paper); padding: 30px; border-radius: var(--border-radius); box-shadow: var(--shadow-drop); margin-bottom: 40px; }
+        .form-section { background: var(--paper); padding: 30px; border-radius: var(--border-radius); box-shadow: var(--shadow-drop); margin-bottom: 40px; transition: background 0.3s;}
         #task-form { display: flex; gap: 20px; width: 100%; flex-wrap: wrap; align-items: flex-end;}
         .input-group { display: flex; flex-direction: column; flex: 1; min-width: 160px; }
         .input-group label { font-size: 0.8em; font-weight: 700; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .input-group input, .input-group select { padding: 14px; border: none; border-radius: 8px; font-family: inherit; font-size: 0.95em; background: var(--bg-base); box-shadow: var(--shadow-inner); outline: none; transition: all 0.2s; color: var(--text-main); }
-        .input-group input:focus, .input-group select:focus { background: var(--paper); box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.2); }
-        button[type="submit"] { padding: 14px 24px; background: var(--text-main); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em; transition: all 0.2s; box-shadow: 0 4px 10px rgba(45, 55, 72, 0.3); margin: 0; }
-        button[type="submit"]:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .input-group input:focus, .input-group select:focus { box-shadow: 0 0 0 2px rgba(74, 85, 104, 0.4); }
+        button[type="submit"] { padding: 14px 24px; background: var(--text-main); color: var(--bg-base); border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin: 0; }
+        button[type="submit"]:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        /* SELECTOR DE COLOR */
+        .color-picker-group { display: flex; flex-direction: column; gap: 8px; }
+        .color-picker-group label { font-size: 0.8em; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .color-options { display: flex; gap: 8px; align-items: center; height: 44px; }
+        .color-option { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
+        .color-option:hover { transform: scale(1.1); }
+        .color-option.selected { border-color: var(--text-main); transform: scale(1.1); }
+        .color-option.white { background: #ffffff; }
+        .color-option.yellow { background: #fff9c4; }
+        .color-option.blue { background: #d6e4ff; }
+        .color-option.green { background: #d4f1d4; }
+        .color-option.pink { background: #ffd6e7; }
+
+        /* BUSCADOR */
+        .search-bar {
+            margin-bottom: 25px; display: flex; gap: 10px; align-items: center;
+            background: var(--paper); padding: 10px 20px; border-radius: 25px;
+            box-shadow: var(--shadow-drop);
+        }
+        .search-bar input {
+            flex: 1; background: transparent; border: none; outline: none;
+            font-family: inherit; font-size: 1em; color: var(--text-main); padding: 8px 0;
+        }
+        .search-bar span { font-size: 1.2em; opacity: 0.6; }
 
         .tabs-container { display: flex; gap: 10px; margin-bottom: 25px; }
         .tab-btn { background: transparent; color: var(--text-muted); border: none; border-radius: 8px; padding: 10px 20px; font-weight: 600; font-size: 1em; cursor: pointer; transition: all 0.2s; margin: 0; box-shadow: none; }
         .tab-btn.active { background: var(--paper); color: var(--text-main); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .filters-bar { margin-bottom: 30px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .filters-bar button { background: rgba(255,255,255,0.4); color: var(--text-muted); border: 1px solid rgba(0,0,0,0.05); padding: 8px 16px; font-size: 0.85em; border-radius: 20px; cursor: pointer; transition: all 0.2s; font-weight: 600; margin: 0; box-shadow: none; }
-        .filters-bar button.active { background: var(--text-main); color: white; border-color: var(--text-main); }
+        .filters-bar button { background: rgba(255,255,255,0.2); color: var(--text-muted); border: 1px solid rgba(0,0,0,0.05); padding: 8px 16px; font-size: 0.85em; border-radius: 20px; cursor: pointer; transition: all 0.2s; font-weight: 600; margin: 0; box-shadow: none; }
+        .filters-bar button.active { background: var(--text-main); color: var(--bg-base); border-color: var(--text-main); }
 
         #task-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
-        .task-card { background: var(--paper); padding: 25px; border-radius: var(--border-radius); display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: var(--shadow-paper); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); border-left: 4px solid var(--text-muted); }
+        
+        .task-card { 
+            background: var(--paper); padding: 25px; border-radius: var(--border-radius); 
+            display: flex; flex-direction: column; justify-content: space-between; position: relative; 
+            box-shadow: var(--shadow-paper); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+            border-left: 4px solid var(--text-muted); 
+        }
+        /* Colores de tarjeta */
+        .task-card.color-white { background: var(--paper); }
+        .task-card.color-yellow { background: #fff9c4; color: #2d3748; }
+        .task-card.color-yellow .task-meta, .task-card.color-yellow .task-assignee, .task-card.color-yellow .task-desc, .task-card.color-yellow .edit-info { color: #4a5568; }
+        .task-card.color-blue { background: #d6e4ff; color: #2d3748; }
+        .task-card.color-blue .task-meta, .task-card.color-blue .task-assignee, .task-card.color-blue .task-desc, .task-card.color-blue .edit-info { color: #4a5568; }
+        .task-card.color-green { background: #d4f1d4; color: #2d3748; }
+        .task-card.color-green .task-meta, .task-card.color-green .task-assignee, .task-card.color-green .task-desc, .task-card.color-green .edit-info { color: #4a5568; }
+        .task-card.color-pink { background: #ffd6e7; color: #2d3748; }
+        .task-card.color-pink .task-meta, .task-card.color-pink .task-assignee, .task-card.color-pink .task-desc, .task-card.color-pink .edit-info { color: #4a5568; }
+        
         .task-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-paper-hover); }
-        .task-card.urgent { border-left-color: var(--urgent-color); background: linear-gradient(to bottom right, var(--paper), var(--paper-urgent)); }
-        .task-card.completed { opacity: 0.6; background: var(--bg-base); border-left-color: var(--success-color); box-shadow: none; }
-        .task-card.completed .task-desc { text-decoration: line-through; color: var(--text-muted); }
+        .task-card.urgent { border-left-color: var(--urgent-color); }
+        .task-card.completed { opacity: 0.6; border-left-color: var(--success-color); box-shadow: none; }
+        .task-card.completed .task-desc { text-decoration: line-through; }
+        
         .task-info { display: flex; flex-direction: column; gap: 15px; flex: 1; }
         .task-meta { font-size: 0.8em; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
-        .task-assignee { background: var(--bg-base); padding: 4px 10px; border-radius: 6px; color: var(--text-main); font-size: 0.9em; }
-        .task-card.urgent .task-assignee { background: #fed7d7; color: #c53030; }
-        .task-desc { font-size: 1.05em; line-height: 1.5; font-weight: 500; color: var(--text-main); margin-top: 5px;}
+        .task-assignee { background: rgba(0,0,0,0.06); padding: 4px 10px; border-radius: 6px; color: var(--text-main); font-size: 0.9em; }
+        .task-desc { font-size: 1.05em; line-height: 1.5; font-weight: 500; margin-top: 5px;}
+        .edit-info { font-size: 0.7em; color: var(--text-muted); font-style: italic; margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+
         .task-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); }
+        .task-actions-left { display: flex; gap: 10px; align-items: center; }
         .task-checkbox { appearance: none; -webkit-appearance: none; width: 28px; height: 28px; cursor: pointer; border-radius: 8px; background: var(--bg-base); box-shadow: var(--shadow-inner); position: relative; transition: all 0.2s; flex-shrink: 0; border: none; }
         .task-checkbox:checked { background: var(--success-color); box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); }
         .task-checkbox:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-weight: bold; font-size: 16px; }
-        .btn-archive { background: transparent; color: var(--text-muted); padding: 6px 12px; font-size: 0.8em; border: 1px dashed var(--text-muted); border-radius: 6px; cursor: pointer; display: none; transition: all 0.2s; margin: 0; box-shadow: none; }
+        .btn-archive, .btn-edit { background: transparent; color: var(--text-muted); padding: 6px 12px; font-size: 0.8em; border: 1px dashed var(--text-muted); border-radius: 6px; cursor: pointer; display: none; transition: all 0.2s; margin: 0; box-shadow: none; }
+        .btn-edit { display: block; } /* El botón editar siempre visible */
         .task-card.completed .btn-archive { display: block; }
-        .empty-msg { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 60px; font-size: 1.1em; font-weight: 500; background: rgba(255,255,255,0.4); border-radius: var(--border-radius); border: 2px dashed rgba(0,0,0,0.1); }
+        .task-card.completed .btn-edit { display: none; }
         
+        .empty-msg { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 60px; font-size: 1.1em; font-weight: 500; background: rgba(255,255,255,0.1); border-radius: var(--border-radius); border: 2px dashed rgba(0,0,0,0.1); }
         .loader { text-align: center; color: var(--text-muted); font-weight: bold; padding: 50px; font-size: 1.2em; }
 
         .watermark-footer {
@@ -106,6 +200,34 @@
             font-size: 0.85em; color: var(--text-muted); line-height: 1.6;
             opacity: 0.8; font-weight: 400;
         }
+
+        /* =========================================
+           MODAL DE EDICIÓN
+           ========================================= */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--modal-overlay); z-index: 1000;
+            justify-content: center; align-items: center; padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: var(--paper); padding: 35px; border-radius: var(--border-radius);
+            width: 100%; max-width: 550px; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .modal-content h2 { margin-top: 0; color: var(--text-main); }
+        .modal-content .input-group { margin-bottom: 18px; }
+        .modal-content .input-group label { display: block; margin-bottom: 8px; }
+        .modal-content .input-group input, .modal-content .input-group select {
+            width: 100%; padding: 12px; border-radius: 8px; border: none;
+            box-shadow: var(--shadow-inner); background: var(--input-bg); color: var(--text-main);
+            font-family: inherit; outline: none;
+        }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px; }
+        .modal-actions button { padding: 12px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; font-family: inherit; }
+        .btn-cancel { background: var(--bg-base); color: var(--text-main); box-shadow: var(--shadow-inner); }
+        .btn-save { background: var(--text-main); color: var(--bg-base); }
     </style>
 </head>
 <body>
@@ -116,13 +238,17 @@
                 <p id="ui-subtitle">Notas y tareas para el siguiente equipo</p>
             </div>
             <div class="header-controls">
+                <div class="theme-toggle">
+                    <button class="theme-btn" id="theme-toggle" title="Cambiar tema">🌙</button>
+                </div>
                 <div class="lang-selector">
                     <button class="lang-btn active" onclick="setLanguage('es')">ES</button>
                     <button class="lang-btn" onclick="setLanguage('en')">EN</button>
                     <button class="lang-btn" onclick="setLanguage('it')">IT</button>
                 </div>
+                <button class="btn-export" id="export-csv" title="Exportar a Excel">📥 <span id="ui-export-btn">Exportar</span></button>
                 <button class="btn-config" id="toggle-config">
-                    <span id="ui-config-btn">⚙️ Gestionar Equipo</span>
+                    <span id="ui-config-btn">⚙️ Equipo</span>
                 </button>
             </div>
         </header>
@@ -132,7 +258,7 @@
             <div class="user-list" id="user-list"></div>
             <form class="add-user-form" id="add-user-form">
                 <input type="text" id="new-user-name" placeholder="Nombre..." required>
-                <button type="submit" id="ui-add-btn">Añadir</button>
+                <button type="submit" id="ui-add-btn" style="padding: 12px 20px; border-radius: 8px; border: none; background: var(--text-main); color: var(--bg-base); font-weight: 600; cursor:pointer;">Añadir</button>
             </form>
         </div>
 
@@ -157,9 +283,24 @@
                     <label for="task-desc" id="ui-label-desc">Descripción</label>
                     <input type="text" id="task-desc" placeholder="..." required>
                 </div>
+                <div class="color-picker-group">
+                    <label id="ui-label-color">Color</label>
+                    <div class="color-options" id="color-options-form">
+                        <div class="color-option white selected" data-color="white" title="Blanco"></div>
+                        <div class="color-option yellow" data-color="yellow" title="Amarillo"></div>
+                        <div class="color-option blue" data-color="blue" title="Azul"></div>
+                        <div class="color-option green" data-color="green" title="Verde"></div>
+                        <div class="color-option pink" data-color="pink" title="Rosa"></div>
+                    </div>
+                </div>
                 <button type="submit" id="ui-submit-btn">📌 Clavar Nota</button>
             </form>
         </section>
+
+        <div class="search-bar">
+            <span>🔍</span>
+            <input type="text" id="search-input" placeholder="Buscar en las notas...">
+        </div>
 
         <div class="tabs-container">
             <button class="tab-btn active" id="tab-board">📌 <span id="ui-tab-board">Pizarra</span></button>
@@ -177,27 +318,64 @@
         </section>
     </div>
 
+    <!-- MODAL DE EDICIÓN -->
+    <div class="modal-overlay" id="edit-modal">
+        <div class="modal-content">
+            <h2 id="ui-edit-title">✏️ Editar Nota</h2>
+            <input type="hidden" id="edit-id">
+            
+            <div class="input-group">
+                <label id="ui-edit-label-desc">Descripción</label>
+                <input type="text" id="edit-desc">
+            </div>
+            <div class="input-group">
+                <label id="ui-edit-label-priority">Prioridad</label>
+                <select id="edit-priority">
+                    <option value="normal">Normal</option>
+                    <option value="urgent">🔴 Urgente</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label id="ui-edit-label-color">Color</label>
+                <div class="color-options" id="color-options-edit">
+                    <div class="color-option white" data-color="white"></div>
+                    <div class="color-option yellow" data-color="yellow"></div>
+                    <div class="color-option blue" data-color="blue"></div>
+                    <div class="color-option green" data-color="green"></div>
+                    <div class="color-option pink" data-color="pink"></div>
+                </div>
+            </div>
+            <div class="input-group">
+                <label id="ui-edit-label-user">¿Quién edita?</label>
+                <select id="edit-user"></select>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-cancel" id="ui-edit-cancel">Cancelar</button>
+                <button class="btn-save" id="ui-edit-save">💾 Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
     <footer class="watermark-footer">
         © 2026 All rights reserved. Platform developed by Carlos Medina, responsible for the design of the technological architecture, software engineering, and comprehensive implementation of the solution. This software constitutes the intellectual property of its author and is protected by Italian legislation and European copyright regulations.
     </footer>
 
     <script>
         // =========================================
-        // 🔑 TUS CLAVES DE JSONBIN (¡REVISA QUE ESTÉN BIEN!)
+        // 🔑 CLAVES JSONBIN (NO TOCAR)
         // =========================================
-        // Asegúrate de que no haya espacios en blanco al principio o final
         const API_KEY = '$2a$10$v28aFPR3QGJmtuxv1sF93eGjQ2psQQBMx.twNk2h7o4ax7zsOHbwu';  
         const BIN_ID = '6ad4f532ffd5d16053764a52';    
         
-        // Eliminamos espacios accidentales en las claves
         const cleanApiKey = API_KEY.trim();
         const cleanBinId = BIN_ID.trim();
         const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${cleanBinId}`;
 
         const translations = {
-            es: { title: "Traspaso de Turno", subtitle: "Notas y tareas para el siguiente equipo", configBtn: "⚙️ Gestionar Equipo", teamTitle: "👥 Compañeros en el Turno", addBtn: "Añadir", labelDate: "Fecha", labelAssignee: "Dejada por", labelPriority: "Prioridad", optNormal: "Normal", optUrgent: "🔴 Urgente", labelDesc: "Descripción", submitBtn: "📌 Clavar Nota", tabBoard: "Pizarra", tabHistory: "Historial", filterAll: "Ver Todo", filterPending: "Pendientes", filterUrgent: "Urgentes", emptyBoard: "No hay notas en la pizarra.", emptyHistory: "El historial está vacío.", confirmArchive: "¿Mover esta nota al historial?", confirmDeleteUser: "¿Eliminar a este compañero?", archiveBtn: "Archivar", loading: "🔄 Sincronizando...", error: "⚠️ Error de conexión.", errorSave: "❌ ERROR AL GUARDAR EN LA NUBE.\nRevisa tus claves de JSONBin.", errorLoad: "❌ ERROR AL LEER DE LA NUBE.\nRevisa tus claves de JSONBin." },
-            en: { title: "Shift Handover", subtitle: "Notes and tasks for the next team", configBtn: "⚙️ Manage Team", teamTitle: "👥 Team Members", addBtn: "Add", labelDate: "Date", labelAssignee: "Left by", labelPriority: "Priority", optNormal: "Normal", optUrgent: "🔴 Urgent", labelDesc: "Description", submitBtn: "📌 Pin Note", tabBoard: "Board", tabHistory: "History", filterAll: "View All", filterPending: "Pending", filterUrgent: "Urgent", emptyBoard: "No notes on the board.", emptyHistory: "History is empty.", confirmArchive: "Move this note to history?", confirmDeleteUser: "Remove this team member?", archiveBtn: "Archive", loading: "🔄 Syncing...", error: "⚠️ Connection error.", errorSave: "❌ ERROR SAVING TO CLOUD.\nCheck your JSONBin keys.", errorLoad: "❌ ERROR LOADING FROM CLOUD.\nCheck your JSONBin keys." },
-            it: { title: "Passaggio di Turno", subtitle: "Note e compiti per il prossimo team", configBtn: "⚙️ Gestisci Team", teamTitle: "👥 Membri del Team", addBtn: "Aggiungi", labelDate: "Data", labelAssignee: "Lasciato da", labelPriority: "Priorità", optNormal: "Normale", optUrgent: "🔴 Urgente", labelDesc: "Descrizione", submitBtn: "📌 Fissa Nota", tabBoard: "Bacheca", tabHistory: "Cronologia", filterAll: "Vedi Tutto", filterPending: "In Sospeso", filterUrgent: "Urgenti", emptyBoard: "Nessuna nota nella bacheca.", emptyHistory: "La cronologia è vuota.", confirmArchive: "Spostare questa nota nella cronologia?", confirmDeleteUser: "Rimuovere questo membro?", archiveBtn: "Archivia", loading: "🔄 Sincronizzazione...", error: "⚠️ Errore di connessione.", errorSave: "❌ ERRORE NEL SALVATAGGIO.\nControlla le chiavi JSONBin.", errorLoad: "❌ ERRORE NEL CARICAMENTO.\nControlla le chiavi JSONBin." }
+            es: { title: "Traspaso de Turno", subtitle: "Notas y tareas para el siguiente equipo", configBtn: "⚙️ Equipo", teamTitle: "👥 Compañeros", addBtn: "Añadir", labelDate: "Fecha", labelAssignee: "Dejada por", labelPriority: "Prioridad", labelColor: "Color", optNormal: "Normal", optUrgent: "🔴 Urgente", labelDesc: "Descripción", submitBtn: "📌 Clavar Nota", tabBoard: "Pizarra", tabHistory: "Historial", filterAll: "Ver Todo", filterPending: "Pendientes", filterUrgent: "Urgentes", emptyBoard: "No hay notas en la pizarra.", emptyHistory: "El historial está vacío.", confirmArchive: "¿Mover al historial?", confirmDeleteUser: "¿Eliminar compañero?", archiveBtn: "Archivar", loading: "🔄 Sincronizando...", error: "⚠️ Error de conexión.", errorSave: "❌ ERROR AL GUARDAR.\nRevisa tus claves de JSONBin.", errorLoad: "❌ ERROR AL LEER.\nRevisa tus claves.", exportBtn: "Exportar", searchPlaceholder: "Buscar en las notas...", editTitle: "✏️ Editar Nota", editDesc: "Descripción", editPriority: "Prioridad", editColor: "Color", editUser: "¿Quién edita?", editCancel: "Cancelar", editSave: "💾 Guardar Cambios", editedBy: "Editado por", at: "a las" },
+            en: { title: "Shift Handover", subtitle: "Notes and tasks for the next team", configBtn: "⚙️ Team", teamTitle: "👥 Team", addBtn: "Add", labelDate: "Date", labelAssignee: "Left by", labelPriority: "Priority", labelColor: "Color", optNormal: "Normal", optUrgent: "🔴 Urgent", labelDesc: "Description", submitBtn: "📌 Pin Note", tabBoard: "Board", tabHistory: "History", filterAll: "View All", filterPending: "Pending", filterUrgent: "Urgent", emptyBoard: "No notes on the board.", emptyHistory: "History is empty.", confirmArchive: "Move to history?", confirmDeleteUser: "Remove team member?", archiveBtn: "Archive", loading: "🔄 Syncing...", error: "⚠️ Connection error.", errorSave: "❌ ERROR SAVING.\nCheck JSONBin keys.", errorLoad: "❌ ERROR LOADING.\nCheck keys.", exportBtn: "Export", searchPlaceholder: "Search notes...", editTitle: "✏️ Edit Note", editDesc: "Description", editPriority: "Priority", editColor: "Color", editUser: "Who edits?", editCancel: "Cancel", editSave: "💾 Save Changes", editedBy: "Edited by", at: "at" },
+            it: { title: "Passaggio di Turno", subtitle: "Note e compiti per il prossimo team", configBtn: "⚙️ Team", teamTitle: "👥 Team", addBtn: "Aggiungi", labelDate: "Data", labelAssignee: "Lasciato da", labelPriority: "Priorità", labelColor: "Colore", optNormal: "Normale", optUrgent: "🔴 Urgente", labelDesc: "Descrizione", submitBtn: "📌 Fissa Nota", tabBoard: "Bacheca", tabHistory: "Cronologia", filterAll: "Vedi Tutto", filterPending: "In Sospeso", filterUrgent: "Urgenti", emptyBoard: "Nessuna nota nella bacheca.", emptyHistory: "La cronologia è vuota.", confirmArchive: "Spostare nella cronologia?", confirmDeleteUser: "Rimuovere membro?", archiveBtn: "Archivia", loading: "🔄 Sincronizzazione...", error: "⚠️ Errore di connessione.", errorSave: "❌ ERRORE NEL SALVATAGGIO.\nControlla le chiavi JSONBin.", errorLoad: "❌ ERRORE NEL CARICAMENTO.\nControlla le chiavi.", exportBtn: "Esporta", searchPlaceholder: "Cerca nelle note...", editTitle: "✏️ Modifica Nota", editDesc: "Descrizione", editPriority: "Priorità", editColor: "Colore", editUser: "Chi modifica?", editCancel: "Annulla", editSave: "💾 Salva Modifiche", editedBy: "Modificato da", at: "alle" }
         };
 
         let currentLang = localStorage.getItem('handoverLang') || 'es';
@@ -205,6 +383,9 @@
         let users = JSON.parse(localStorage.getItem('handoverUsers')) || ['A.K.', 'Ennio', 'Martina', 'Michele'];
         let currentFilter = 'all';
         let currentView = 'board';
+        let searchQuery = '';
+        let selectedColor = 'white';
+        let selectedEditColor = 'white';
 
         const form = document.getElementById('task-form');
         const taskList = document.getElementById('task-list');
@@ -216,28 +397,61 @@
         const tabBoard = document.getElementById('tab-board');
         const tabHistory = document.getElementById('tab-history');
         const filtersBar = document.getElementById('filters-bar');
+        const searchInput = document.getElementById('search-input');
+        const themeToggle = document.getElementById('theme-toggle');
 
         dateInput.value = new Date().toISOString().split('T')[0];
 
         // =========================================
-        // ☁️ FUNCIONES DE NUBE (CON DIAGNÓSTICO)
+        // 🌙 MODO OSCURO
         // =========================================
-        
+        function initTheme() {
+            const savedTheme = localStorage.getItem('handoverTheme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeToggle.textContent = '☀️';
+            } else {
+                themeToggle.textContent = '🌙';
+            }
+        }
+
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('handoverTheme', isDark ? 'dark' : 'light');
+            themeToggle.textContent = isDark ? '☀️' : '🌙';
+        });
+
+        // =========================================
+        // 🎨 SELECTOR DE COLORES
+        // =========================================
+        function setupColorPickers() {
+            document.querySelectorAll('#color-options-form .color-option').forEach(el => {
+                el.addEventListener('click', () => {
+                    document.querySelectorAll('#color-options-form .color-option').forEach(o => o.classList.remove('selected'));
+                    el.classList.add('selected');
+                    selectedColor = el.dataset.color;
+                });
+            });
+            document.querySelectorAll('#color-options-edit .color-option').forEach(el => {
+                el.addEventListener('click', () => {
+                    document.querySelectorAll('#color-options-edit .color-option').forEach(o => o.classList.remove('selected'));
+                    el.classList.add('selected');
+                    selectedEditColor = el.dataset.color;
+                });
+            });
+        }
+
+        // =========================================
+        // ☁️ JSONBIN
+        // =========================================
         async function fetchTasksFromCloud() {
             try {
                 const response = await fetch(JSONBIN_URL, {
                     method: 'GET',
-                    headers: {
-                        'X-Master-Key': cleanApiKey,
-                        'X-Bin-Meta': 'false'
-                    }
+                    headers: { 'X-Master-Key': cleanApiKey, 'X-Bin-Meta': 'false' }
                 });
-                
-                // Si la respuesta NO es exitosa (ej. 401 Unauthorized)
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 tasks = data.tasks || [];
                 renderTasks();
@@ -251,26 +465,20 @@
             try {
                 const response = await fetch(JSONBIN_URL, {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': cleanApiKey
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-Master-Key': cleanApiKey },
                     body: JSON.stringify({ tasks: tasks })
                 });
-                
-                // 🔴 AQUÍ ESTÁ LA CORRECCIÓN: Verificamos si el servidor aceptó el guardado
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 renderTasks();
             } catch (error) {
                 console.error("Error al guardar:", error);
-                // Alerta clara para el usuario
-                alert(`${translations[currentLang].errorSave}\n\nDetalle técnico: ${error.message}`);
+                alert(`${translations[currentLang].errorSave}\n\nDetalle: ${error.message}`);
             }
         }
 
+        // =========================================
+        // TRADUCCIONES
+        // =========================================
         function setLanguage(lang) {
             currentLang = lang;
             localStorage.setItem('handoverLang', lang);
@@ -280,11 +488,13 @@
             document.getElementById('ui-title').textContent = t.title;
             document.getElementById('ui-subtitle').textContent = t.subtitle;
             document.getElementById('ui-config-btn').textContent = t.configBtn;
+            document.getElementById('ui-export-btn').textContent = t.exportBtn;
             document.getElementById('ui-team-title').textContent = t.teamTitle;
             document.getElementById('ui-add-btn').textContent = t.addBtn;
             document.getElementById('ui-label-date').textContent = t.labelDate;
             document.getElementById('ui-label-assignee').textContent = t.labelAssignee;
             document.getElementById('ui-label-priority').textContent = t.labelPriority;
+            document.getElementById('ui-label-color').textContent = t.labelColor;
             document.getElementById('ui-opt-normal').textContent = t.optNormal;
             document.getElementById('ui-opt-urgent').textContent = t.optUrgent;
             document.getElementById('ui-label-desc').textContent = t.labelDesc;
@@ -294,16 +504,35 @@
             document.getElementById('filter-all').textContent = t.filterAll;
             document.getElementById('filter-pending').textContent = t.filterPending;
             document.getElementById('filter-urgent').textContent = t.filterUrgent;
+            document.getElementById('ui-edit-title').textContent = t.editTitle;
+            document.getElementById('ui-edit-label-desc').textContent = t.editDesc;
+            document.getElementById('ui-edit-label-priority').textContent = t.editPriority;
+            document.getElementById('ui-edit-label-color').textContent = t.editColor;
+            document.getElementById('ui-edit-label-user').textContent = t.editUser;
+            document.getElementById('ui-edit-cancel').textContent = t.editCancel;
+            document.getElementById('ui-edit-save').textContent = t.editSave;
+            searchInput.placeholder = t.searchPlaceholder;
             renderTasks();
         }
 
+        // =========================================
+        // USUARIOS
+        // =========================================
         function renderUsers() {
             assigneeSelect.innerHTML = '';
+            const editUserSelect = document.getElementById('edit-user');
+            editUserSelect.innerHTML = '';
+            
             users.forEach(user => {
                 const option = document.createElement('option');
                 option.value = user; option.textContent = user;
                 assigneeSelect.appendChild(option);
+                
+                const editOption = document.createElement('option');
+                editOption.value = user; editOption.textContent = user;
+                editUserSelect.appendChild(editOption);
             });
+            
             userListDiv.innerHTML = '';
             users.forEach((user, index) => {
                 const tag = document.createElement('div');
@@ -333,6 +562,9 @@
             configPanel.classList.toggle('active');
         });
 
+        // =========================================
+        // RENDERIZADO DE TAREAS
+        // =========================================
         function renderTasks() {
             taskList.innerHTML = ''; 
             const t = translations[currentLang];
@@ -342,6 +574,16 @@
                 if (currentFilter === 'urgent') return task.priority === 'urgent' && !task.completed;
                 return true;
             });
+            
+            // Búsqueda
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                filteredTasks = filteredTasks.filter(task => 
+                    task.description.toLowerCase().includes(q) || 
+                    task.assignee.toLowerCase().includes(q)
+                );
+            }
+            
             filteredTasks.sort((a, b) => new Date(b.date) - new Date(a.date));
 
             if (filteredTasks.length === 0) {
@@ -351,17 +593,31 @@
 
             filteredTasks.forEach(task => {
                 const card = document.createElement('div');
-                card.className = `task-card ${task.priority === 'urgent' ? 'urgent' : ''} ${task.completed ? 'completed' : ''}`;
+                const colorClass = task.color ? `color-${task.color}` : 'color-white';
+                card.className = `task-card ${colorClass} ${task.priority === 'urgent' ? 'urgent' : ''} ${task.completed ? 'completed' : ''}`;
+                
                 const dateObj = new Date(task.date + 'T00:00:00');
                 const formattedDate = dateObj.toLocaleDateString(currentLang === 'en' ? 'en-GB' : currentLang + '-' + currentLang.toUpperCase(), { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+                // Historial de edición
+                let editInfoHtml = '';
+                if (task.lastEdit && task.lastEdit.user) {
+                    const editDate = new Date(task.lastEdit.timestamp);
+                    const formattedEditTime = editDate.toLocaleString(currentLang === 'en' ? 'en-GB' : currentLang + '-' + currentLang.toUpperCase(), { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+                    editInfoHtml = `<div class="edit-info">🕓 ${t.editedBy} ${task.lastEdit.user} ${t.at} ${formattedEditTime}</div>`;
+                }
 
                 card.innerHTML = `
                     <div class="task-info">
                         <div class="task-meta"><span>📅 ${formattedDate}</span><span class="task-assignee">👤 ${task.assignee}</span></div>
                         <div class="task-desc">${task.description}</div>
+                        ${editInfoHtml}
                     </div>
                     <div class="task-actions">
-                        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} ${task.archived ? 'disabled' : ''}>
+                        <div class="task-actions-left">
+                            <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} ${task.archived ? 'disabled' : ''}>
+                            <button class="btn-edit" onclick="openEditModal(${task.id})">✏️ ${t.editTitle.split(' ')[1] || 'Editar'}</button>
+                        </div>
                         <button class="btn-archive" onclick="archiveTask(${task.id})">${t.archiveBtn}</button>
                     </div>
                 `;
@@ -375,13 +631,18 @@
             });
         }
 
+        // =========================================
+        // CREAR, EDITAR Y ELIMINAR
+        // =========================================
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             const newTask = {
                 id: Date.now(), date: dateInput.value, assignee: assigneeSelect.value,
                 priority: document.getElementById('task-priority').value,
                 description: document.getElementById('task-desc').value,
-                completed: false, archived: false
+                completed: false, archived: false,
+                color: selectedColor,
+                lastEdit: null
             };
             tasks.push(newTask);
             saveTasksToCloud(); 
@@ -403,6 +664,104 @@
             }
         }
 
+        // =========================================
+        // MODAL DE EDICIÓN
+        // =========================================
+        window.openEditModal = function(id) {
+            const task = tasks.find(t => t.id === id);
+            if (!task) return;
+            
+            document.getElementById('edit-id').value = task.id;
+            document.getElementById('edit-desc').value = task.description;
+            document.getElementById('edit-priority').value = task.priority;
+            selectedEditColor = task.color || 'white';
+            
+            document.querySelectorAll('#color-options-edit .color-option').forEach(o => {
+                o.classList.toggle('selected', o.dataset.color === selectedEditColor);
+            });
+            
+            document.getElementById('edit-modal').classList.add('active');
+        }
+
+        document.getElementById('ui-edit-cancel').addEventListener('click', () => {
+            document.getElementById('edit-modal').classList.remove('active');
+        });
+
+        document.getElementById('ui-edit-save').addEventListener('click', () => {
+            const id = parseInt(document.getElementById('edit-id').value);
+            const newDesc = document.getElementById('edit-desc').value;
+            const newPriority = document.getElementById('edit-priority').value;
+            const editUser = document.getElementById('edit-user').value;
+            
+            tasks = tasks.map(task => {
+                if (task.id === id) {
+                    return { 
+                        ...task, 
+                        description: newDesc, 
+                        priority: newPriority, 
+                        color: selectedEditColor,
+                        lastEdit: { 
+                            user: editUser, 
+                            timestamp: new Date().toISOString() 
+                        }
+                    };
+                }
+                return task;
+            });
+            
+            document.getElementById('edit-modal').classList.remove('active');
+            saveTasksToCloud();
+        });
+
+        // =========================================
+        // EXPORTAR A CSV
+        // =========================================
+        document.getElementById('export-csv').addEventListener('click', () => {
+            if (tasks.length === 0) {
+                alert("No hay notas para exportar.");
+                return;
+            }
+            
+            const headers = ["ID", "Fecha", "Asignado", "Prioridad", "Descripción", "Completado", "Archivado", "Color", "Última Edición (Usuario)", "Última Edición (Fecha)"];
+            const rows = tasks.map(t => [
+                t.id,
+                t.date,
+                t.assignee,
+                t.priority,
+                `"${t.description.replace(/"/g, '""')}"`, // Escapar comillas
+                t.completed ? "Sí" : "No",
+                t.archived ? "Sí" : "No",
+                t.color || "white",
+                t.lastEdit ? t.lastEdit.user : "",
+                t.lastEdit ? t.lastEdit.timestamp : ""
+            ]);
+            
+            let csvContent = "\uFEFF"; // BOM para Excel con tildes
+            csvContent += headers.join(",") + "\n";
+            rows.forEach(row => { csvContent += row.join(",") + "\n"; });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Traspaso_Turno_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // =========================================
+        // BUSCADOR
+        // =========================================
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.trim();
+            renderTasks();
+        });
+
+        // =========================================
+        // PESTAÑAS Y FILTROS
+        // =========================================
         tabBoard.addEventListener('click', () => {
             currentView = 'board'; tabBoard.classList.add('active'); tabHistory.classList.remove('active');
             filtersBar.style.display = 'flex'; setFilter('all', document.getElementById('filter-all'));
@@ -420,10 +779,14 @@
             btn.classList.add('active'); renderTasks();
         }
 
+        // =========================================
+        // INICIALIZACIÓN
+        // =========================================
+        initTheme();
+        setupColorPickers();
         renderUsers();
         setLanguage(currentLang);
         
-        // Verificación inicial de claves
         if(cleanApiKey.includes('TU_API_KEY') || cleanBinId.includes('TU_BIN_ID')) {
             taskList.innerHTML = `<p class="empty-msg" style="color: #c53030;">⚠️ Faltan las claves de JSONBin. Revisa el código.</p>`;
         } else {
